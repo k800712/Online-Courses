@@ -11,8 +11,9 @@ public class Student {
     private String email;
     private String nickname;
     private LocalDateTime enrolledAt;
+    private boolean isDeleted = false;
 
-    // Getters and Setters
+
     public Long getId() {
         return id;
     }
@@ -43,5 +44,12 @@ public class Student {
 
     public void setEnrolledAt(LocalDateTime enrolledAt) {
         this.enrolledAt = enrolledAt;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }
