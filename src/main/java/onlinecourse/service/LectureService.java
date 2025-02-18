@@ -77,7 +77,7 @@ package onlinecourse.service;
                         .map(student -> {
                             StudentDTO studentDTO = new StudentDTO();
                             studentDTO.setNickname(student.getNickname());
-                            studentDTO.setEnrolledAt(student.getEnrollmentDate());
+                            studentDTO.setEnrolledAt(student.getEnrolledAt());
                             return studentDTO;
                         })
                         .collect(Collectors.toList()));

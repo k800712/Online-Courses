@@ -2,29 +2,17 @@ package onlinecourse.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
     private String email;
-
-    @Column(nullable = false)
     private String nickname;
+    private LocalDateTime enrolledAt;
 
-    @ManyToMany(mappedBy = "students")
-    private List<Lecture> lectures;
-
-    @Column(nullable = false)
-    private LocalDateTime enrollmentDate;
-
-    public Student() {
-    }
-
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -49,21 +37,11 @@ public class Student {
         this.nickname = nickname;
     }
 
-    public List<Lecture> getLectures() {
-        return lectures;
+    public LocalDateTime getEnrolledAt() {
+        return enrolledAt;
     }
 
-    public void setLectures(List<Lecture> lectures) {
-        this.lectures = lectures;
+    public void setEnrolledAt(LocalDateTime enrolledAt) {
+        this.enrolledAt = enrolledAt;
     }
-
-    public LocalDateTime getEnrollmentDate() {
-        return enrollmentDate;
-    }
-
-    public void setEnrollmentDate(LocalDateTime enrollmentDate) {
-        this.enrollmentDate = enrollmentDate;
-    }
-
-
 }
