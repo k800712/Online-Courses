@@ -56,6 +56,13 @@ package onlinecourse.service;
             }
 
             public void deleteLecture(Long id) {
+                Lecture lecture = lectureRepository.findById(id).orElse(null);
+                if (lecture == null) {
+                    throw new IllegalArgumentException("존재하지 않는 강의입니다.");
+                }
+                if (!lecture.getStudents().isEmpty()) {
+                    throw new IllegalStateException("수강 신청한 수강생이 있는 강의는 삭제할 수 없습니다.");
+                }
                 lectureRepository.deleteById(id);
             }
 
