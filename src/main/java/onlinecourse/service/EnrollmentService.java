@@ -1,35 +1,52 @@
 package onlinecourse.service;
 
-    import onlinecourse.model.Enrollment;
-    import onlinecourse.model.Student;
-    import onlinecourse.model.Lecture;
-    import onlinecourse.repository.EnrollmentRepository;
-    import onlinecourse.repository.StudentRepository;
-    import onlinecourse.repository.LectureRepository;
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.stereotype.Service;
+        import onlinecourse.model.Enrollment;
+        import onlinecourse.model.Student;
+        import onlinecourse.model.Lecture;
+        import onlinecourse.repository.EnrollmentRepository;
+        import onlinecourse.repository.StudentRepository;
+        import onlinecourse.repository.LectureRepository;
+        import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.stereotype.Service;
 
-    @Service
-    public class EnrollmentService {
-        @Autowired
-        private EnrollmentRepository enrollmentRepository;
+        import java.util.List;
+        import java.util.Optional;
+        import java.util.stream.Collectors;
 
-        @Autowired
-        private StudentRepository studentRepository;
+        @Service
+        public class EnrollmentService {
 
-        @Autowired
-        private LectureRepository lectureRepository;
+            @Autowired
+            private EnrollmentRepository enrollmentRepository;
 
-        public Enrollment enroll(Long studentId, Long lectureId) {
-            Student student = studentRepository.findById(studentId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
-            Lecture lecture = lectureRepository.findById(lectureId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+            @Autowired
+            private StudentRepository studentRepository;
 
-            Enrollment enrollment = new Enrollment();
-            enrollment.setStudent(student);
-            enrollment.setLecture(lecture);
+            @Autowired
+            private LectureRepository lectureRepository;
 
-            return enrollmentRepository.save(enrollment);
+            public Enrollment enroll(Long studentId, Long lectureId) {
+                Optional<Student> studentOpt = studentRepository.findById(studentId);
+                Optional<Lecture> lectureOpt = lectureRepository.findById(lectureId);
+
+                if (studentOpt.isEmpty()) {
+                    throw new IllegalArgumentException("존재하지 않는 회원입니다.");
+                }
+
+                if (lectureOpt.isEmpty()) {
+                    throw new IllegalArgumentException("존재하지 않는 강의입니다.");
+                }
+
+                Enrollment enrollment = new Enrollment();
+                enrollment.setStudent(studentOpt.get());
+                enrollment.setLecture(lectureOpt.get());
+
+                return enrollmentRepository.save(enrollment);
+            }
+
+            public List<Enrollment> enrollMultiple(Long studentId, List<Long> lectureIds) {
+                return lectureIds.stream()
+                        .map(lectureId -> enroll(studentId, lectureId))
+                        .collect(Collectors.toList());
+            }
         }
-    }

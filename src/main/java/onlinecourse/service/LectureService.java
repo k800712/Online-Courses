@@ -1,10 +1,13 @@
-package onlinecourse.service;
+// src/main/java/onlinecourse/service/LectureService.java
+        package onlinecourse.service;
 
         import onlinecourse.dto.LectureDTO;
         import onlinecourse.dto.StudentDTO;
         import onlinecourse.model.Lecture;
         import onlinecourse.repository.LectureRepository;
         import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.data.domain.Page;
+        import org.springframework.data.domain.PageRequest;
         import org.springframework.stereotype.Service;
 
         import java.time.LocalDateTime;
@@ -21,8 +24,7 @@ package onlinecourse.service;
                 if ("createdAt".equals(sortBy)) {
                     lectures = lectureRepository.findAllByOrderByCreatedAtDesc();
                 } else {
-                    // 기본 정렬 기준을 설정하거나 다른 정렬 기준을 추가할 수 있습니다.
-                    lectures = lectureRepository.findAll();
+                    lectures = lectureRepository.findByIsPrivateFalse(); // 비공개 강의는 목록 조회에서 제외
                 }
                 return lectures.stream()
                         .map(this::convertToDTO)
@@ -38,8 +40,12 @@ package onlinecourse.service;
             }
 
             public Lecture createLecture(Lecture lecture) {
+                if (lectureRepository.findByTitle(lecture.getTitle()).isPresent()) {
+                    throw new IllegalArgumentException("이미 존재하는 강의 제목입니다.");
+                }
                 lecture.setCreatedAt(LocalDateTime.now());
                 lecture.setUpdatedAt(LocalDateTime.now());
+                lecture.setPrivate(true); // 기본적으로 비공개 상태로 설정
                 return lectureRepository.save(lecture);
             }
 
@@ -66,6 +72,22 @@ package onlinecourse.service;
                 lectureRepository.deleteById(id);
             }
 
+            public List<Lecture> searchByTitleAndCategory(String title, String category) {
+                return lectureRepository.findByTitleContainingAndCategory(title, category);
+            }
+
+            public List<Lecture> searchByInstructorNameAndCategory(String instructorName, String category) {
+                return lectureRepository.findByInstructorNameContainingAndCategory(instructorName, category);
+            }
+
+            public Page<Lecture> getLecturesSortedByStudentCount(int page, int size) {
+                return lectureRepository.findByOrderByStudentCountDesc(PageRequest.of(page, size));
+            }
+
+            public List<Lecture> searchByStudentId(Long studentId) {
+                return lectureRepository.findByStudentsId(studentId);
+            }
+
             private LectureDTO convertToDTO(Lecture lecture) {
                 LectureDTO dto = new LectureDTO();
                 dto.setId(lecture.getId());
@@ -85,5 +107,11 @@ package onlinecourse.service;
                 dto.setCreatedAt(lecture.getCreatedAt());
                 dto.setUpdatedAt(lecture.getUpdatedAt());
                 return dto;
+            }
+
+            public Lecture makeLecturePublic(Long id) {
+                Lecture lecture = lectureRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+                lecture.setPrivate(false);
+                return lectureRepository.save(lecture);
             }
         }
