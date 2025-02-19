@@ -6,7 +6,6 @@ import onlinecourse.model.Lecture;
 import onlinecourse.model.Student;
 import onlinecourse.repository.LectureRepository;
 import onlinecourse.repository.StudentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,17 +14,21 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class LectureService {
-    @Autowired
-    private LectureRepository lectureRepository;
 
-    @Autowired
-    private StudentRepository studentRepository;
+    private final LectureRepository lectureRepository;
+    private final StudentRepository studentRepository;
+
+    public LectureService(LectureRepository lectureRepository, StudentRepository studentRepository) {
+        this.lectureRepository = lectureRepository;
+        this.studentRepository = studentRepository;
+    }
 
     public List<LectureDTO> getAllLectures(String sortBy) {
         List<Lecture> lectures;
@@ -47,8 +50,9 @@ public class LectureService {
         return null;
     }
 
-    public Lecture createLecture(Lecture lecture) {
+    public LectureDTO createLecture(LectureDTO lectureDTO) {
         checkAdmin();
+        Lecture lecture = convertToEntity(lectureDTO);
         validateLecture(lecture);
         if (lectureRepository.findByTitle(lecture.getTitle()).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 강의 제목입니다.");
@@ -56,11 +60,13 @@ public class LectureService {
         lecture.setCreatedAt(LocalDateTime.now());
         lecture.setUpdatedAt(LocalDateTime.now());
         lecture.setPrivate(true); // 기본적으로 비공개 상태로 설정
-        return lectureRepository.save(lecture);
+        Lecture savedLecture = lectureRepository.save(lecture);
+        return convertToDTO(savedLecture);
     }
 
-    public Lecture updateLecture(Long id, Lecture lectureDetails) {
+    public LectureDTO updateLecture(Long id, LectureDTO lectureDTO) {
         checkAdmin();
+        Lecture lectureDetails = convertToEntity(lectureDTO);
         validateLecture(lectureDetails);
         Lecture lecture = lectureRepository.findById(id).orElse(null);
         if (lecture != null) {
@@ -68,7 +74,8 @@ public class LectureService {
             lecture.setDescription(lectureDetails.getDescription());
             lecture.setPrice(lectureDetails.getPrice());
             lecture.setUpdatedAt(LocalDateTime.now());
-            return lectureRepository.save(lecture);
+            Lecture updatedLecture = lectureRepository.save(lecture);
+            return convertToDTO(updatedLecture);
         }
         return null;
     }
@@ -85,20 +92,27 @@ public class LectureService {
         lectureRepository.deleteById(id);
     }
 
-    public List<Lecture> searchByTitleAndCategory(String title, String category) {
-        return lectureRepository.findByTitleContainingAndCategory(title, category);
+    public List<LectureDTO> searchByTitleAndCategory(String title, String category) {
+        return lectureRepository.findByTitleContainingAndCategory(title, category).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<Lecture> searchByInstructorNameAndCategory(String instructorName, String category) {
-        return lectureRepository.findByInstructorNameContainingAndCategory(instructorName, category);
+    public List<LectureDTO> searchByInstructorNameAndCategory(String instructorName, String category) {
+        return lectureRepository.findByInstructorNameContainingAndCategory(instructorName, category).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public Page<Lecture> getLecturesSortedByStudentCount(int page, int size) {
-        return lectureRepository.findByOrderByStudentCountDesc(PageRequest.of(page, size));
+    public Page<LectureDTO> getLecturesSortedByStudentCount(int page, int size) {
+        return lectureRepository.findByOrderByStudentCountDesc(PageRequest.of(page, size))
+                .map(this::convertToDTO);
     }
 
-    public List<Lecture> searchByStudentId(Long studentId) {
-        return lectureRepository.findByStudentsId(studentId);
+    public List<LectureDTO> searchByStudentId(Long studentId) {
+        return lectureRepository.findByStudentsId(studentId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     public void cancelLectureRegistration(Long lectureId) {
@@ -178,21 +192,23 @@ public class LectureService {
         }
     }
 
-    public Lecture makeLecturePublic(Long id) {
+    public LectureDTO makeLecturePublic(Long id) {
         checkAdmin();
         Lecture lecture = lectureRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
         lecture.setPrivate(false);
-        return lectureRepository.save(lecture);
+        Lecture updatedLecture = lectureRepository.save(lecture);
+        return convertToDTO(updatedLecture);
     }
 
-    public Lecture makeLecturePrivate(Long id) {
+    public LectureDTO makeLecturePrivate(Long id) {
         checkAdmin();
         Lecture lecture = lectureRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
         if (!lecture.getStudents().isEmpty()) {
             throw new IllegalStateException("수강 신청한 수강생이 있는 강의는 비공개로 전환할 수 없습니다.");
         }
         lecture.setPrivate(true);
-        return lectureRepository.save(lecture);
+        Lecture updatedLecture = lectureRepository.save(lecture);
+        return convertToDTO(updatedLecture);
     }
 
     private void checkAdmin() {
@@ -227,22 +243,59 @@ public class LectureService {
 
     private LectureDTO convertToDTO(Lecture lecture) {
         LectureDTO dto = new LectureDTO();
-        dto.setId(lecture.getId());
         dto.setTitle(lecture.getTitle());
         dto.setDescription(lecture.getDescription());
         dto.setPrice(lecture.getPrice());
-        dto.setStudentCount(lecture.getStudents().size());
-        dto.setStudents(lecture.getStudents().stream()
-                .map(student -> {
-                    StudentDTO studentDTO = new StudentDTO();
-                    studentDTO.setNickname(student.getNickname());
-                    studentDTO.setEnrolledAt(student.getEnrolledAt());
-                    return studentDTO;
-                })
-                .collect(Collectors.toList()));
-        dto.setCategory(lecture.getCategory().name());
+
+        // students 필드가 null인지 확인
+        if (lecture.getStudents() != null) {
+            dto.setStudentCount(lecture.getStudents().size());
+            dto.setStudents(lecture.getStudents().stream()
+                    .map(student -> {
+                        StudentDTO studentDTO = new StudentDTO();
+                        studentDTO.setNickname(student.getNickname());
+                        studentDTO.setEnrolledAt(student.getEnrolledAt());
+                        return studentDTO;
+                    })
+                    .collect(Collectors.toList()));
+        } else {
+            dto.setStudentCount(0);
+            dto.setStudents(Collections.emptyList());
+        }
+
+        // category 필드가 null인지 확인
+        if (lecture.getCategory() != null) {
+            dto.setCategory(lecture.getCategory().name());
+        } else {
+            dto.setCategory("UNKNOWN"); // 또는 적절한 기본값 설정
+        }
+        dto.setInstructorName(lecture.getInstructorName());
         dto.setCreatedAt(lecture.getCreatedAt());
         dto.setUpdatedAt(lecture.getUpdatedAt());
         return dto;
+    }
+
+    private Lecture convertToEntity(LectureDTO lectureDTO) {
+        Lecture lecture = new Lecture();
+        lecture.setTitle(lectureDTO.getTitle());
+        lecture.setDescription(lectureDTO.getDescription());
+        lecture.setPrice(lectureDTO.getPrice());
+
+        // category 필드가 null인지 확인
+        if (lectureDTO.getCategory() != null) {
+            try {
+                lecture.setCategory(Lecture.Category.valueOf(lectureDTO.getCategory()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("유효하지 않은 카테고리입니다: " + lectureDTO.getCategory());
+            }
+        } else {
+            throw new IllegalArgumentException("카테고리는 필수입니다.");
+        }
+
+        lecture.setCreatedAt(lectureDTO.getCreatedAt());
+        lecture.setUpdatedAt(lectureDTO.getUpdatedAt());
+        lecture.setInstructorName(lectureDTO.getInstructorName());
+        lecture.setStudentCount(lectureDTO.getStudentCount());
+        return lecture;
     }
 }

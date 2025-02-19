@@ -1,6 +1,8 @@
 package onlinecourse.model;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -13,17 +15,13 @@ public class Instructor {
     private String name;
 
     @OneToMany(mappedBy = "instructor")
-    private List<Lecture> lectures;
+    private List<Lecture> lectures = new ArrayList<>();
 
     public Instructor() {
     }
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {

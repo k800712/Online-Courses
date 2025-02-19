@@ -1,18 +1,21 @@
 package onlinecourse.controller;
 
-import onlinecourse.model.Enrollment;
+import onlinecourse.dto.EnrollmentDTO;
 import onlinecourse.service.EnrollmentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/enrollments")
 public class EnrollmentController {
-    @Autowired
-    private EnrollmentService enrollmentService;
+
+    private final EnrollmentService enrollmentService;
+
+    public EnrollmentController(EnrollmentService enrollmentService) {
+        this.enrollmentService = enrollmentService;
+    }
 
     @PostMapping
-    public Enrollment enroll(@RequestParam Long studentId, @RequestParam Long lectureId) {
+    public EnrollmentDTO enroll(@RequestParam Long studentId, @RequestParam Long lectureId) {
         return enrollmentService.enroll(studentId, lectureId);
     }
 }

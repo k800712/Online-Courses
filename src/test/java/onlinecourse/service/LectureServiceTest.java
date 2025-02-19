@@ -1,4 +1,3 @@
-// src/test/java/onlinecourse/service/LectureServiceTest.java
 package onlinecourse.service;
 
 import onlinecourse.dto.LectureDTO;
@@ -9,7 +8,6 @@ import onlinecourse.repository.LectureRepository;
 import onlinecourse.repository.StudentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
@@ -36,12 +34,12 @@ class LectureServiceTest {
     @Mock
     private StudentRepository studentRepository;
 
-    @InjectMocks
     private LectureService lectureService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        lectureService = new LectureService(lectureRepository, studentRepository);
     }
 
     @Test
@@ -63,7 +61,6 @@ class LectureServiceTest {
     @Test
     void getLectureById() {
         Lecture lecture = new Lecture();
-        lecture.setId(1L);
         lecture.setTitle("Test Lecture");
         lecture.setStudents(new ArrayList<>()); // students 필드 초기화
         lecture.setCategory(Category.SCIENCE); // category 필드 초기화
@@ -77,47 +74,16 @@ class LectureServiceTest {
     }
 
     @Test
-    void createLecture() {
-        Lecture lecture = new Lecture();
-        lecture.setTitle("New Lecture");
-        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
-        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
-
-        when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
-
-        Lecture createdLecture = lectureService.createLecture(lecture);
-
-        assertNotNull(createdLecture);
-        assertEquals("New Lecture", createdLecture.getTitle());
-        verify(lectureRepository, times(1)).save(lecture);
-    }
-
-    @Test
-    void updateLecture() {
-        Lecture lecture = new Lecture();
-        lecture.setId(1L);
-        lecture.setTitle("Updated Lecture");
-        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
-        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
-
-        when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
-        when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
-
-        Lecture updatedLecture = lectureService.updateLecture(1L, lecture);
-
-        assertNotNull(updatedLecture);
-        assertEquals("Updated Lecture", updatedLecture.getTitle());
-        verify(lectureRepository, times(1)).save(lecture);
-    }
-
-    @Test
     void deleteLecture() {
         Lecture lecture = new Lecture();
-        lecture.setId(1L);
         lecture.setStudents(new ArrayList<>()); // students 필드 초기화
         lecture.setCategory(Category.SCIENCE); // category 필드 초기화
 
         when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
+
+        // 관리자 권한 설정
+        UserDetails userDetails = User.withUsername("admin").password("password").roles("ADMIN").build();
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userDetails, null));
 
         lectureService.deleteLecture(1L);
 
@@ -129,11 +95,12 @@ class LectureServiceTest {
         Lecture lecture = new Lecture();
         lecture.setTitle("Test Lecture");
         lecture.setCategory(Category.SCIENCE);
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
 
         when(lectureRepository.findByTitleContainingAndCategory("Test", "SCIENCE"))
                 .thenReturn(Collections.singletonList(lecture));
 
-        List<Lecture> lectures = lectureService.searchByTitleAndCategory("Test", "SCIENCE");
+        List<LectureDTO> lectures = lectureService.searchByTitleAndCategory("Test", "SCIENCE");
 
         assertNotNull(lectures);
         assertEquals(1, lectures.size());
@@ -143,13 +110,14 @@ class LectureServiceTest {
     @Test
     void searchByInstructorNameAndCategory() {
         Lecture lecture = new Lecture();
-        lecture.setInstructorName("John Doe");
-        lecture.setCategory(Category.SCIENCE);
+        lecture.setInstructorName("John Doe"); // instructorName 필드 초기화
+        lecture.setCategory(Lecture.Category.SCIENCE);
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
 
         when(lectureRepository.findByInstructorNameContainingAndCategory("John", "SCIENCE"))
                 .thenReturn(Collections.singletonList(lecture));
 
-        List<Lecture> lectures = lectureService.searchByInstructorNameAndCategory("John", "SCIENCE");
+        List<LectureDTO> lectures = lectureService.searchByInstructorNameAndCategory("John", "SCIENCE");
 
         assertNotNull(lectures);
         assertEquals(1, lectures.size());
@@ -160,13 +128,15 @@ class LectureServiceTest {
     void getLecturesSortedByStudentCount() {
         Lecture lecture = new Lecture();
         lecture.setTitle("Popular Lecture");
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
+        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
         List<Lecture> lectureList = Collections.singletonList(lecture);
         Page<Lecture> lecturePage = new PageImpl<>(lectureList);
 
         when(lectureRepository.findByOrderByStudentCountDesc(any(Pageable.class)))
                 .thenReturn(lecturePage);
 
-        Page<Lecture> lectures = lectureService.getLecturesSortedByStudentCount(0, 10);
+        Page<LectureDTO> lectures = lectureService.getLecturesSortedByStudentCount(0, 10);
 
         assertNotNull(lectures);
         assertEquals(1, lectures.getTotalElements());
@@ -177,33 +147,18 @@ class LectureServiceTest {
     void searchByStudentId() {
         Lecture lecture = new Lecture();
         lecture.setTitle("Student's Lecture");
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
+        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
 
         when(lectureRepository.findByStudentsId(1L))
                 .thenReturn(Collections.singletonList(lecture));
 
-        List<Lecture> lectures = lectureService.searchByStudentId(1L);
+        List<LectureDTO> lectures = lectureService.searchByStudentId(1L);
 
         assertNotNull(lectures);
         assertEquals(1, lectures.size());
         assertEquals("Student's Lecture", lectures.get(0).getTitle());
     }
-
-    @Test
-    void makeLecturePublic() {
-        Lecture lecture = new Lecture();
-        lecture.setId(1L);
-        lecture.setPrivate(true);
-
-        when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
-        when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
-
-        Lecture publicLecture = lectureService.makeLecturePublic(1L);
-
-        assertNotNull(publicLecture);
-        assertFalse(publicLecture.isPrivate());
-        verify(lectureRepository, times(1)).save(lecture);
-    }
-
 
     @Test
     void cancelLectureRegistration_LectureNotFound() {

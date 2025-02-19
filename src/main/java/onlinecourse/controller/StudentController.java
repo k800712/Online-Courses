@@ -1,10 +1,9 @@
 // src/main/java/onlinecourse/controller/StudentController.java
 package onlinecourse.controller;
 
-import onlinecourse.model.Lecture;
-import onlinecourse.model.Student;
+import onlinecourse.dto.StudentDTO;
+import onlinecourse.dto.LectureDTO;
 import onlinecourse.service.StudentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,13 +13,17 @@ import java.util.List;
 @RequestMapping("/students")
 public class StudentController {
 
-    @Autowired
-    private StudentService studentService;
+
+    private final StudentService studentService;
+
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
+    }
 
     @PostMapping
-    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
+    public ResponseEntity<StudentDTO> createStudent(@RequestBody StudentDTO studentDTO) {
         try {
-            Student createdStudent = studentService.createStudent(student);
+            StudentDTO createdStudent = studentService.createStudent(studentDTO);
             return ResponseEntity.ok(createdStudent);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(null);
@@ -33,9 +36,9 @@ public class StudentController {
     }
 
     @PostMapping("/lectures")
-    public ResponseEntity<String> registerLectures(@RequestBody List<Lecture> lectures) {
+    public ResponseEntity<String> registerLectures(@RequestBody List<LectureDTO> lectureDTOs) {
         try {
-            studentService.registerLectures(lectures);
+            studentService.registerLectures(lectureDTOs);
             return ResponseEntity.ok("강의가 성공적으로 등록되었습니다.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
