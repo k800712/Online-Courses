@@ -1,143 +1,144 @@
 // src/main/java/onlinecourse/model/Lecture.java
-            package onlinecourse.model;
+package onlinecourse.model;
 
-            import jakarta.persistence.*;
-            import java.time.LocalDateTime;
-            import java.util.List;
+import jakarta.persistence.*;
 
-            @Entity
-            public class Lecture {
-                @Id
-                @GeneratedValue(strategy = GenerationType.IDENTITY)
-                private Long id;
+import java.time.LocalDateTime;
+import java.util.List;
 
-                @Column(nullable = false)
-                private String title;
+@Entity
+public class Lecture {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-                @Lob
-                @Column(columnDefinition = "text")
-                private String description;
+    @Column(nullable = false)
+    private String title;
 
-                @Column(nullable = false)
-                private double price;
+    @Lob
+    @Column(columnDefinition = "text")
+    private String description;
 
-                @ManyToOne(fetch = FetchType.LAZY)
-                @JoinColumn(name = "instructor_id")
-                private Instructor instructor;
+    @Column(nullable = false)
+    private double price;
 
-                @Enumerated(EnumType.STRING)
-                @Column(nullable = false)
-                private Category category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instructor_id")
+    private Instructor instructor;
 
-                @ManyToMany
-                @JoinTable(
-                    name = "lecture_student",
-                    joinColumns = @JoinColumn(name = "lecture_id"),
-                    inverseJoinColumns = @JoinColumn(name = "student_id")
-                )
-                private List<Student> students;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Category category;
 
-                @Column(nullable = false)
-                private LocalDateTime createdAt;
+    @ManyToMany
+    @JoinTable(
+            name = "lecture_student",
+            joinColumns = @JoinColumn(name = "lecture_id"),
+            inverseJoinColumns = @JoinColumn(name = "student_id")
+    )
+    private List<Student> students;
 
-                @Column(nullable = false)
-                private LocalDateTime updatedAt;
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 
-                @Column(nullable = false)
-                private boolean isPrivate = true; // 기본적으로 비공개 상태
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
-                @Column(nullable = false)
-                private String instructorName; // 필드 추가
+    @Column(nullable = false)
+    private boolean isPrivate = true; // 기본적으로 비공개 상태
 
-                public Lecture() {
-                }
+    @Column(nullable = false)
+    private String instructorName; // 필드 추가
 
-                // Getters and Setters
-                public Long getId() {
-                    return id;
-                }
+    public Lecture() {
+    }
 
-                public void setId(Long id) {
-                    this.id = id;
-                }
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
 
-                public String getTitle() {
-                    return title;
-                }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-                public void setTitle(String title) {
-                    this.title = title;
-                }
+    public String getTitle() {
+        return title;
+    }
 
-                public String getDescription() {
-                    return description;
-                }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-                public void setDescription(String description) {
-                    this.description = description;
-                }
+    public String getDescription() {
+        return description;
+    }
 
-                public double getPrice() {
-                    return price;
-                }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-                public void setPrice(double price) {
-                    this.price = price;
-                }
+    public double getPrice() {
+        return price;
+    }
 
-                public Instructor getInstructor() {
-                    return instructor;
-                }
+    public void setPrice(double price) {
+        this.price = price;
+    }
 
-                public void setInstructor(Instructor instructor) {
-                    this.instructor = instructor;
-                }
+    public Instructor getInstructor() {
+        return instructor;
+    }
 
-                public Category getCategory() {
-                    return category;
-                }
+    public void setInstructor(Instructor instructor) {
+        this.instructor = instructor;
+    }
 
-                public void setCategory(Category category) {
-                    this.category = category;
-                }
+    public Category getCategory() {
+        return category;
+    }
 
-                public List<Student> getStudents() {
-                    return students;
-                }
+    public void setCategory(Category category) {
+        this.category = category;
+    }
 
-                public void setStudents(List<Student> students) {
-                    this.students = students;
-                }
+    public List<Student> getStudents() {
+        return students;
+    }
 
-                public LocalDateTime getCreatedAt() {
-                    return createdAt;
-                }
+    public void setStudents(List<Student> students) {
+        this.students = students;
+    }
 
-                public void setCreatedAt(LocalDateTime createdAt) {
-                    this.createdAt = createdAt;
-                }
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
-                public LocalDateTime getUpdatedAt() {
-                    return updatedAt;
-                }
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 
-                public void setUpdatedAt(LocalDateTime updatedAt) {
-                    this.updatedAt = updatedAt;
-                }
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 
-                public boolean isPrivate() {
-                    return isPrivate;
-                }
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
-                public void setPrivate(boolean isPrivate) {
-                    this.isPrivate = isPrivate;
-                }
+    public boolean isPrivate() {
+        return isPrivate;
+    }
 
-                public String getInstructorName() {
-                    return instructorName;
-                }
+    public void setPrivate(boolean isPrivate) {
+        this.isPrivate = isPrivate;
+    }
 
-                public void setInstructorName(String instructorName) {
-                    this.instructorName = instructorName;
-                }
-            }
+    public String getInstructorName() {
+        return instructorName;
+    }
+
+    public void setInstructorName(String instructorName) {
+        this.instructorName = instructorName;
+    }
+}
