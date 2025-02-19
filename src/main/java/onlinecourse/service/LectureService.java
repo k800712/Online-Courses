@@ -4,20 +4,28 @@
         import onlinecourse.dto.LectureDTO;
         import onlinecourse.dto.StudentDTO;
         import onlinecourse.model.Lecture;
+        import onlinecourse.model.Student;
         import onlinecourse.repository.LectureRepository;
+        import onlinecourse.repository.StudentRepository;
         import org.springframework.beans.factory.annotation.Autowired;
         import org.springframework.data.domain.Page;
         import org.springframework.data.domain.PageRequest;
+        import org.springframework.security.core.context.SecurityContextHolder;
+        import org.springframework.security.core.userdetails.UserDetails;
         import org.springframework.stereotype.Service;
 
         import java.time.LocalDateTime;
         import java.util.List;
+        import java.util.Optional;
         import java.util.stream.Collectors;
 
         @Service
         public class LectureService {
             @Autowired
             private LectureRepository lectureRepository;
+
+            @Autowired
+            private StudentRepository studentRepository;
 
             public List<LectureDTO> getAllLectures(String sortBy) {
                 List<Lecture> lectures;
@@ -86,6 +94,33 @@
 
             public List<Lecture> searchByStudentId(Long studentId) {
                 return lectureRepository.findByStudentsId(studentId);
+            }
+
+            public void cancelLectureRegistration(Long lectureId) {
+                String email = getLoggedInUserEmail();
+                Optional<Student> studentOpt = studentRepository.findByEmailAndDeletedFalse(email);
+                if (studentOpt.isPresent()) {
+                    Student student = studentOpt.get();
+                    Optional<Lecture> lectureOpt = lectureRepository.findById(lectureId);
+                    if (lectureOpt.isPresent()) {
+                        Lecture lecture = lectureOpt.get();
+                        student.getLectures().remove(lecture);
+                        studentRepository.save(student);
+                    } else {
+                        throw new IllegalArgumentException("존재하지 않는 강의입니다.");
+                    }
+                } else {
+                    throw new IllegalArgumentException("존재하지 않는 회원입니다.");
+                }
+            }
+
+            private String getLoggedInUserEmail() {
+                Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                if (principal instanceof UserDetails) {
+                    return ((UserDetails) principal).getUsername();
+                } else {
+                    return principal.toString();
+                }
             }
 
             private LectureDTO convertToDTO(Lecture lecture) {

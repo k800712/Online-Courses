@@ -10,6 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.ArrayList;
@@ -125,5 +129,35 @@ class StudentServiceTest {
 
         assertEquals("한 번에 최대 10개의 강의만 등록할 수 있습니다.", exception.getMessage());
         verify(lectureRepository, never()).saveAll(lectures);
+    }
+    @Test
+    void deleteLoggedInStudent_Success() {
+        Student student = new Student();
+        student.setEmail("test@example.com");
+        student.setDeleted(false);
+
+        UserDetails userDetails = User.withUsername("test@example.com").password("password").roles("USER").build();
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userDetails, null));
+
+        when(studentRepository.findByEmailAndDeletedFalse("test@example.com")).thenReturn(Optional.of(student));
+
+        studentService.deleteLoggedInStudent();
+
+        assertTrue(student.isDeleted());
+        verify(studentRepository, times(1)).save(student);
+    }
+
+    @Test
+    void deleteLoggedInStudent_NotFound() {
+        UserDetails userDetails = User.withUsername("test@example.com").password("password").roles("USER").build();
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userDetails, null));
+
+        when(studentRepository.findByEmailAndDeletedFalse("test@example.com")).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            studentService.deleteLoggedInStudent();
+        });
+
+        assertEquals("존재하지 않는 회원입니다.", exception.getMessage());
     }
 }

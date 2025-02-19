@@ -1,195 +1,225 @@
 // src/test/java/onlinecourse/service/LectureServiceTest.java
-                    package onlinecourse.service;
+package onlinecourse.service;
 
-                    import onlinecourse.dto.LectureDTO;
-                    import onlinecourse.model.Category;
-                    import onlinecourse.model.Lecture;
-                    import onlinecourse.repository.LectureRepository;
-                    import org.junit.jupiter.api.Test;
-                    import org.mockito.InjectMocks;
-                    import org.mockito.Mock;
-                    import org.mockito.MockitoAnnotations;
-                    import org.springframework.data.domain.Page;
-                    import org.springframework.data.domain.PageImpl;
-                    import org.springframework.data.domain.Pageable;
+import onlinecourse.dto.LectureDTO;
+import onlinecourse.model.Category;
+import onlinecourse.model.Lecture;
+import onlinecourse.model.Student;
+import onlinecourse.repository.LectureRepository;
+import onlinecourse.repository.StudentRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 
-                    import java.util.Collections;
-                    import java.util.List;
-                    import java.util.Optional;
-                    import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.ArrayList;
 
-                    import static org.junit.jupiter.api.Assertions.*;
-                    import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-                    class LectureServiceTest {
+class LectureServiceTest {
 
-                        @Mock
-                        private LectureRepository lectureRepository;
+    @Mock
+    private LectureRepository lectureRepository;
 
-                        @InjectMocks
-                        private LectureService lectureService;
+    @Mock
+    private StudentRepository studentRepository;
 
-                        public LectureServiceTest() {
-                            MockitoAnnotations.openMocks(this);
-                        }
+    @InjectMocks
+    private LectureService lectureService;
 
-                        @Test
-                        void getAllLectures() {
-                            Lecture lecture = new Lecture();
-                            lecture.setTitle("Test Lecture");
-                            lecture.setStudents(new ArrayList<>()); // students 필드 초기화
-                            lecture.setCategory(Category.SCIENCE); // category 필드 초기화
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
 
-                            when(lectureRepository.findByIsPrivateFalse()).thenReturn(Collections.singletonList(lecture));
+    @Test
+    void getAllLectures() {
+        Lecture lecture = new Lecture();
+        lecture.setTitle("Test Lecture");
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
+        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
 
-                            List<LectureDTO> lectures = lectureService.getAllLectures(null);
+        when(lectureRepository.findByIsPrivateFalse()).thenReturn(Collections.singletonList(lecture));
 
-                            assertNotNull(lectures);
-                            assertEquals(1, lectures.size());
-                            assertEquals("Test Lecture", lectures.get(0).getTitle());
-                        }
+        List<LectureDTO> lectures = lectureService.getAllLectures(null);
 
-                        @Test
-                        void getLectureById() {
-                            Lecture lecture = new Lecture();
-                            lecture.setId(1L);
-                            lecture.setTitle("Test Lecture");
-                            lecture.setStudents(new ArrayList<>()); // students 필드 초기화
-                            lecture.setCategory(Category.SCIENCE); // category 필드 초기화
+        assertNotNull(lectures);
+        assertEquals(1, lectures.size());
+        assertEquals("Test Lecture", lectures.get(0).getTitle());
+    }
 
-                            when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
+    @Test
+    void getLectureById() {
+        Lecture lecture = new Lecture();
+        lecture.setId(1L);
+        lecture.setTitle("Test Lecture");
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
+        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
 
-                            LectureDTO lectureDTO = lectureService.getLectureById(1L);
+        when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
 
-                            assertNotNull(lectureDTO);
-                            assertEquals("Test Lecture", lectureDTO.getTitle());
-                        }
+        LectureDTO lectureDTO = lectureService.getLectureById(1L);
 
-                        @Test
-                        void createLecture() {
-                            Lecture lecture = new Lecture();
-                            lecture.setTitle("New Lecture");
-                            lecture.setStudents(new ArrayList<>()); // students 필드 초기화
-                            lecture.setCategory(Category.SCIENCE); // category 필드 초기화
+        assertNotNull(lectureDTO);
+        assertEquals("Test Lecture", lectureDTO.getTitle());
+    }
 
-                            when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
+    @Test
+    void createLecture() {
+        Lecture lecture = new Lecture();
+        lecture.setTitle("New Lecture");
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
+        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
 
-                            Lecture createdLecture = lectureService.createLecture(lecture);
+        when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
 
-                            assertNotNull(createdLecture);
-                            assertEquals("New Lecture", createdLecture.getTitle());
-                            verify(lectureRepository, times(1)).save(lecture);
-                        }
+        Lecture createdLecture = lectureService.createLecture(lecture);
 
-                        @Test
-                        void updateLecture() {
-                            Lecture lecture = new Lecture();
-                            lecture.setId(1L);
-                            lecture.setTitle("Updated Lecture");
-                            lecture.setStudents(new ArrayList<>()); // students 필드 초기화
-                            lecture.setCategory(Category.SCIENCE); // category 필드 초기화
+        assertNotNull(createdLecture);
+        assertEquals("New Lecture", createdLecture.getTitle());
+        verify(lectureRepository, times(1)).save(lecture);
+    }
 
-                            when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
-                            when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
+    @Test
+    void updateLecture() {
+        Lecture lecture = new Lecture();
+        lecture.setId(1L);
+        lecture.setTitle("Updated Lecture");
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
+        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
 
-                            Lecture updatedLecture = lectureService.updateLecture(1L, lecture);
+        when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
+        when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
 
-                            assertNotNull(updatedLecture);
-                            assertEquals("Updated Lecture", updatedLecture.getTitle());
-                            verify(lectureRepository, times(1)).save(lecture);
-                        }
+        Lecture updatedLecture = lectureService.updateLecture(1L, lecture);
 
-                        @Test
-                        void deleteLecture() {
-                            Lecture lecture = new Lecture();
-                            lecture.setId(1L);
-                            lecture.setStudents(new ArrayList<>()); // students 필드 초기화
-                            lecture.setCategory(Category.SCIENCE); // category 필드 초기화
+        assertNotNull(updatedLecture);
+        assertEquals("Updated Lecture", updatedLecture.getTitle());
+        verify(lectureRepository, times(1)).save(lecture);
+    }
 
-                            when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
+    @Test
+    void deleteLecture() {
+        Lecture lecture = new Lecture();
+        lecture.setId(1L);
+        lecture.setStudents(new ArrayList<>()); // students 필드 초기화
+        lecture.setCategory(Category.SCIENCE); // category 필드 초기화
 
-                            lectureService.deleteLecture(1L);
+        when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
 
-                            verify(lectureRepository, times(1)).deleteById(1L);
-                        }
+        lectureService.deleteLecture(1L);
 
-                        @Test
-                        void searchByTitleAndCategory() {
-                            Lecture lecture = new Lecture();
-                            lecture.setTitle("Test Lecture");
-                            lecture.setCategory(Category.SCIENCE);
+        verify(lectureRepository, times(1)).deleteById(1L);
+    }
 
-                            when(lectureRepository.findByTitleContainingAndCategory("Test", "SCIENCE"))
-                                    .thenReturn(Collections.singletonList(lecture));
+    @Test
+    void searchByTitleAndCategory() {
+        Lecture lecture = new Lecture();
+        lecture.setTitle("Test Lecture");
+        lecture.setCategory(Category.SCIENCE);
 
-                            List<Lecture> lectures = lectureService.searchByTitleAndCategory("Test", "SCIENCE");
+        when(lectureRepository.findByTitleContainingAndCategory("Test", "SCIENCE"))
+                .thenReturn(Collections.singletonList(lecture));
 
-                            assertNotNull(lectures);
-                            assertEquals(1, lectures.size());
-                            assertEquals("Test Lecture", lectures.get(0).getTitle());
-                        }
+        List<Lecture> lectures = lectureService.searchByTitleAndCategory("Test", "SCIENCE");
 
-                        @Test
-                        void searchByInstructorNameAndCategory() {
-                            Lecture lecture = new Lecture();
-                            lecture.setInstructorName("John Doe");
-                            lecture.setCategory(Category.SCIENCE);
+        assertNotNull(lectures);
+        assertEquals(1, lectures.size());
+        assertEquals("Test Lecture", lectures.get(0).getTitle());
+    }
 
-                            when(lectureRepository.findByInstructorNameContainingAndCategory("John", "SCIENCE"))
-                                    .thenReturn(Collections.singletonList(lecture));
+    @Test
+    void searchByInstructorNameAndCategory() {
+        Lecture lecture = new Lecture();
+        lecture.setInstructorName("John Doe");
+        lecture.setCategory(Category.SCIENCE);
 
-                            List<Lecture> lectures = lectureService.searchByInstructorNameAndCategory("John", "SCIENCE");
+        when(lectureRepository.findByInstructorNameContainingAndCategory("John", "SCIENCE"))
+                .thenReturn(Collections.singletonList(lecture));
 
-                            assertNotNull(lectures);
-                            assertEquals(1, lectures.size());
-                            assertEquals("John Doe", lectures.get(0).getInstructorName());
-                        }
+        List<Lecture> lectures = lectureService.searchByInstructorNameAndCategory("John", "SCIENCE");
 
-                        @Test
-                        void getLecturesSortedByStudentCount() {
-                            Lecture lecture = new Lecture();
-                            lecture.setTitle("Popular Lecture");
-                            List<Lecture> lectureList = Collections.singletonList(lecture);
-                            Page<Lecture> lecturePage = new PageImpl<>(lectureList);
+        assertNotNull(lectures);
+        assertEquals(1, lectures.size());
+        assertEquals("John Doe", lectures.get(0).getInstructorName());
+    }
 
-                            when(lectureRepository.findByOrderByStudentCountDesc(any(Pageable.class)))
-                                    .thenReturn(lecturePage);
+    @Test
+    void getLecturesSortedByStudentCount() {
+        Lecture lecture = new Lecture();
+        lecture.setTitle("Popular Lecture");
+        List<Lecture> lectureList = Collections.singletonList(lecture);
+        Page<Lecture> lecturePage = new PageImpl<>(lectureList);
 
-                            Page<Lecture> lectures = lectureService.getLecturesSortedByStudentCount(0, 10);
+        when(lectureRepository.findByOrderByStudentCountDesc(any(Pageable.class)))
+                .thenReturn(lecturePage);
 
-                            assertNotNull(lectures);
-                            assertEquals(1, lectures.getTotalElements());
-                            assertEquals("Popular Lecture", lectures.getContent().get(0).getTitle());
-                        }
+        Page<Lecture> lectures = lectureService.getLecturesSortedByStudentCount(0, 10);
 
-                        @Test
-                        void searchByStudentId() {
-                            Lecture lecture = new Lecture();
-                            lecture.setTitle("Student's Lecture");
+        assertNotNull(lectures);
+        assertEquals(1, lectures.getTotalElements());
+        assertEquals("Popular Lecture", lectures.getContent().get(0).getTitle());
+    }
 
-                            when(lectureRepository.findByStudentsId(1L))
-                                    .thenReturn(Collections.singletonList(lecture));
+    @Test
+    void searchByStudentId() {
+        Lecture lecture = new Lecture();
+        lecture.setTitle("Student's Lecture");
 
-                            List<Lecture> lectures = lectureService.searchByStudentId(1L);
+        when(lectureRepository.findByStudentsId(1L))
+                .thenReturn(Collections.singletonList(lecture));
 
-                            assertNotNull(lectures);
-                            assertEquals(1, lectures.size());
-                            assertEquals("Student's Lecture", lectures.get(0).getTitle());
-                        }
+        List<Lecture> lectures = lectureService.searchByStudentId(1L);
 
-                        @Test
-                        void makeLecturePublic() {
-                            Lecture lecture = new Lecture();
-                            lecture.setId(1L);
-                            lecture.setPrivate(true);
+        assertNotNull(lectures);
+        assertEquals(1, lectures.size());
+        assertEquals("Student's Lecture", lectures.get(0).getTitle());
+    }
 
-                            when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
-                            when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
+    @Test
+    void makeLecturePublic() {
+        Lecture lecture = new Lecture();
+        lecture.setId(1L);
+        lecture.setPrivate(true);
 
-                            Lecture publicLecture = lectureService.makeLecturePublic(1L);
+        when(lectureRepository.findById(1L)).thenReturn(Optional.of(lecture));
+        when(lectureRepository.save(any(Lecture.class))).thenReturn(lecture);
 
-                            assertNotNull(publicLecture);
-                            assertFalse(publicLecture.isPrivate());
-                            verify(lectureRepository, times(1)).save(lecture);
-                        }
-                    }
+        Lecture publicLecture = lectureService.makeLecturePublic(1L);
+
+        assertNotNull(publicLecture);
+        assertFalse(publicLecture.isPrivate());
+        verify(lectureRepository, times(1)).save(lecture);
+    }
+
+
+    @Test
+    void cancelLectureRegistration_LectureNotFound() {
+        Student student = new Student();
+        student.setEmail("test@example.com");
+
+        UserDetails userDetails = User.withUsername("test@example.com").password("password").roles("USER").build();
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userDetails, null));
+
+        when(studentRepository.findByEmailAndDeletedFalse("test@example.com")).thenReturn(Optional.of(student));
+        when(lectureRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            lectureService.cancelLectureRegistration(1L);
+        });
+
+        assertEquals("존재하지 않는 강의입니다.", exception.getMessage());
+    }
+}

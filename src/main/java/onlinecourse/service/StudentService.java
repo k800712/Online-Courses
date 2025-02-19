@@ -6,6 +6,8 @@ import onlinecourse.model.Student;
 import onlinecourse.repository.LectureRepository;
 import onlinecourse.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -51,5 +53,36 @@ public class StudentService {
             throw new IllegalArgumentException("한 번에 최대 10개의 강의만 등록할 수 있습니다.");
         }
         lectureRepository.saveAll(lectures);
+    }
+
+    public Lecture createLecture(Lecture lecture) {
+        if (lectureRepository.findByTitle(lecture.getTitle()).isPresent()) {
+            throw new IllegalArgumentException("이미 존재하는 강의 제목입니다.");
+        }
+        lecture.setCreatedAt(LocalDateTime.now());
+        lecture.setUpdatedAt(LocalDateTime.now());
+        lecture.setPrivate(true); // 기본적으로 비공개 상태로 설정
+        return lectureRepository.save(lecture);
+    }
+
+    public void deleteLoggedInStudent() {
+        String email = getLoggedInUserEmail();
+        Optional<Student> studentOpt = studentRepository.findByEmailAndDeletedFalse(email);
+        if (studentOpt.isPresent()) {
+            Student student = studentOpt.get();
+            student.setDeleted(true);
+            studentRepository.save(student);
+        } else {
+            throw new IllegalArgumentException("존재하지 않는 회원입니다.");
+        }
+    }
+
+    private String getLoggedInUserEmail() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
     }
 }
