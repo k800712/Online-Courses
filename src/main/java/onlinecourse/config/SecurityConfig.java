@@ -1,4 +1,3 @@
-// src/main/java/onlinecourse/config/SecurityConfig.java
 package onlinecourse.config;
 
 import org.springframework.context.annotation.Bean;

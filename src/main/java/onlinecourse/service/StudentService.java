@@ -8,7 +8,7 @@ import onlinecourse.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,7 +25,7 @@ public class StudentService {
     private LectureRepository lectureRepository;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
     public Student createStudent(Student student) {
         Optional<Student> existingStudent = studentRepository.findByEmailAndDeletedFalse(student.getEmail());
